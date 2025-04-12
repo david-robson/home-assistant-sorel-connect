@@ -17,5 +17,6 @@ DEVICE_INFO: Final = DeviceInfo(
 	entry_type=DeviceEntryType.SERVICE,
 )
 
-MAX_SENSORS = 10
-MAX_RELAYS = 5
+MAX_SENSORS = 20
+MAX_RELAYS = 8
+MAX_PWM = 5
