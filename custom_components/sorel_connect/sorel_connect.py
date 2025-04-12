@@ -209,16 +209,14 @@ class SorelConnectClient:
 		self._sensors_count = 0
 		for sensor_id in range(1, sensors_to_check + 1):
 			sensor_value = await self._get_sensor_value(sensor_id)
-			if sensor_value is None:
-				break
-
-			self._create_entity(
-				SorelConnectEntityType.TEMPERATURE,
-				self._get_entity_sensor_id(sensor_id),
-				self._get_entity_sensor_name(sensor_id),
-				sensor_value
-			)
-			self._sensors_count += 1
+			if sensor_value is not None:
+				self._create_entity(
+					SorelConnectEntityType.TEMPERATURE,
+					self._get_entity_sensor_id(sensor_id),
+					self._get_entity_sensor_name(sensor_id),
+					sensor_value
+				)
+				self._sensors_count += 1
 
 		if self._config[CONF_ID] not in self._stored_data:
 			self._stored_data[self._config[CONF_ID]] = {}
