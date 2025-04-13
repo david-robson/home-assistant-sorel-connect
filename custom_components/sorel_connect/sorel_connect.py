@@ -245,12 +245,10 @@ class SorelConnectClient:
 	async def _get_sensor_value(self, sensor_id: int) -> StateType:
 		response = await self._logged_request(self._get_sensor_url(sensor_id))
 		value = await self._get_value_from_response(response)
-
+		LOGGER.debug("Sensor " + sensor_id + " returned " + value)
 		if value is None:
 			return None
-
 		match = re.match("^(-?\\d+)°C$", value)
-
 		return float(match.group(1))
 
 	async def _detect_and_create_power_and_energy_sensors(self) -> None:
@@ -386,8 +384,9 @@ class SorelConnectClient:
 			self._config[CONF_PASSWORD],
 		)
 
+	# If the device is XHCC, use "state.json?id=sensorXX"
 	def _get_sensor_url(self, sensor_id: int) -> str:
-		return "https://{}/sensors.json?id={}".format(
+		return "https://{}/state.json?id=sensor{}".format(
 			self._get_host(),
 			sensor_id,
 		)
