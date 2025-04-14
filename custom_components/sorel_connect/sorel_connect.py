@@ -108,13 +108,14 @@ class SorelConnectClient:
 		json = json_load(data.strip('()'))
 
 		if "session_key" not in json:
+			LOGGER.debug("Login returned {}", data)
 			raise InvalidCredentials
+		LOGGER.debug("Login ok. {}", json)
 
 		self._cookies = response.cookies
 
 	async def initialize(self) -> None:
 		await self._load_stored_data()
-
 		await self.login()
 		await self._detect_and_create_sensors()
 		await self._detect_and_create_power_and_energy_sensors()
@@ -151,11 +152,13 @@ class SorelConnectClient:
 		for relay_id in range(1, MAX_RELAYS + 1):
 			relay_raw_value = await self._get_relay_raw_value(relay_id)
 			if relay_raw_value is None:
+				LOGGER.debug("Relay {} value is None", relay_id)
 				continue
 
 			entity_type = self._detect_entity_type_from_relay_value(relay_id, relay_raw_value)
 
 			if entity_type is None:
+				LOGGER.debug("Unknown entity_type of relay {}", relay_id)
 				continue
 
 			self._create_entity(
@@ -168,25 +171,20 @@ class SorelConnectClient:
 	async def _update_relays_states(self) -> None:
 		for relay_id in range(1, MAX_RELAYS + 1):
 			relay_raw_value = await self._get_relay_raw_value(relay_id)
-
 			if relay_raw_value is None:
 				continue
-
 			self._entities_states[self._get_entity_relay_id(relay_id)] = self._get_entity_value_from_relay_value(relay_id, relay_raw_value)
 
 	async def _get_relay_raw_value(self, relay_id: int) -> StateType:
 		response = await self._logged_request(self._get_relay_url(relay_id))
-
 		return await self._get_value_from_response(response)
 
 	@staticmethod
 	def _detect_entity_type_from_relay_value(relay_id: int, relay_raw_value: str) -> SorelConnectEntityType | None:
 		if re.match("^\\d+_(OFF|ON)$", relay_raw_value):
 			return SorelConnectEntityType.ON_OFF
-
 		if re.match("^(\\d+)_(\\d+)%$", relay_raw_value):
 			return SorelConnectEntityType.PERCENTAGE
-
 		LOGGER.debug("Unknown type of relay {}: {}", relay_id, relay_raw_value)
 		return None
 
@@ -195,21 +193,21 @@ class SorelConnectClient:
 		on_off_match = re.match("^\\d+_(OFF|ON)$", relay_raw_value)
 		if on_off_match:
 			return STATE_ON if on_off_match.group(1) == "ON" else STATE_OFF
-
 		percent_match = re.match("^\\d+_(\\d+)%$", relay_raw_value)
 		if percent_match:
 			return float(percent_match.group(1))
-
 		LOGGER.debug("Unknown value of relay {}: {}", relay_id, relay_raw_value)
 		return None
 
 	async def _detect_and_create_sensors(self) -> None:
-		sensors_to_check = self._sensors_count if self._sensors_count is not None else MAX_SENSORS
-
+		LOGGER.debug("Detecting and creating sensors...")
 		self._sensors_count = 0
-		for sensor_id in range(1, sensors_to_check + 1):
+		#sensors_to_check = self._sensors_count if self._sensors_count is not None else MAX_SENSORS
+		#for sensor_id in range(1, sensors_to_check + 1):
+		for relay_id in range(1, MAX_SENSORS + 1):
 			sensor_value = await self._get_sensor_value(sensor_id)
 			if sensor_value is not None:
+				LOGGER.debug("Sensor {} detected with value of {}", sensor_id, sensor_value)
 				self._create_entity(
 					SorelConnectEntityType.TEMPERATURE,
 					self._get_entity_sensor_id(sensor_id),
@@ -217,17 +215,17 @@ class SorelConnectClient:
 					sensor_value
 				)
 				self._sensors_count += 1
-
+			else
+				LOGGER.debug("Unknown value of relay {}: {}", relay_id, relay_raw_value)
+	
 		if self._config[CONF_ID] not in self._stored_data:
 			self._stored_data[self._config[CONF_ID]] = {}
-
 		self._stored_data[self._config[CONF_ID]][STORAGE_SENSORS_KEY] = self._sensors_count
 		self._store.async_delay_save(self._data_to_store)
 
 	def _create_sensor(self, sensor_id: int, sensor_value: StateType) -> None:
 		if SorelConnectEntityType.TEMPERATURE not in self.entities:
 			self.entities[SorelConnectEntityType.TEMPERATURE] = {}
-
 		entity_sensor_id = self._get_entity_sensor_id(sensor_id)
 		self.entities[SorelConnectEntityType.TEMPERATURE][entity_sensor_id] = SorelConnectEntity(
 			"{}.{}".format(self._config[CONF_ID], entity_sensor_id),
@@ -235,8 +233,8 @@ class SorelConnectClient:
 			entity_sensor_id,
 			self._get_entity_sensor_name(sensor_id),
 		)
-
 		self._entities_states[entity_sensor_id] = sensor_value
+		LOGGER.debug("Created sensor_id={} with entity_sensor_id={} and sensor_value={}.", sensor_id, entity_sensor_id, sensor_value )
 
 	async def _update_sensors_states(self) -> None:
 		for sensor_id in range(1, self._sensors_count + 1):
@@ -245,7 +243,7 @@ class SorelConnectClient:
 	async def _get_sensor_value(self, sensor_id: int) -> StateType:
 		response = await self._logged_request(self._get_sensor_url(sensor_id))
 		value = await self._get_value_from_response(response)
-		LOGGER.debug("Sensor " + sensor_id + " returned " + value)
+		LOGGER.debug("Sensor {} returned value={}", sensor_id, value)
 		if value is None:
 			return None
 		match = re.match("^(-?\\d+)°C$", value)
