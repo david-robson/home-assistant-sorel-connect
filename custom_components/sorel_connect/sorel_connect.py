@@ -204,7 +204,7 @@ class SorelConnectClient:
 		self._sensors_count = 0
 		#sensors_to_check = self._sensors_count if self._sensors_count is not None else MAX_SENSORS
 		#for sensor_id in range(1, sensors_to_check + 1):
-		for relay_id in range(1, MAX_SENSORS + 1):
+		for sensor_id in range(1, MAX_SENSORS + 1):
 			sensor_value = await self._get_sensor_value(sensor_id)
 			if sensor_value is not None:
 				LOGGER.debug("Sensor {} detected with value of {}", sensor_id, sensor_value)
