@@ -1,6 +1,6 @@
 # Sorel Connect Integration for Home Assistant
 
-Forked from 
+Forked from [@kukulich](https://github.com/kukulich/home-assistant-sorel-connect)
 
 A Home Assistant integration for communicating with certain Sorel devices. The device(s) must be connected to Sorel Connect either through a built-in ethernet connection (XHCC) or a separate gateway. See [Sorel Connect](https://www.sorel.de/en/controller/sorel-connect/) or [Sorel Connect HCC](https://www.sorel.de/en/controller/sorel-connect/hcc-sorel-connect/)
 
