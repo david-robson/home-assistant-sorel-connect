@@ -215,7 +215,7 @@ class SorelConnectClient:
 					sensor_value
 				)
 				self._sensors_count += 1
-			else
+			else:
 				LOGGER.debug("Unknown value of relay {}: {}", relay_id, relay_raw_value)
 	
 		if self._config[CONF_ID] not in self._stored_data:
