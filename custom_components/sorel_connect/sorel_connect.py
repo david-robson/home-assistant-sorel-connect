@@ -216,7 +216,7 @@ class SorelConnectClient:
 				)
 				self._sensors_count += 1
 			else:
-				LOGGER.debug("Unknown value of relay {}: {}", relay_id, relay_raw_value)
+				LOGGER.debug("Unknown value of semspr {}: {}", sensor_id, sensor_value)
 	
 		if self._config[CONF_ID] not in self._stored_data:
 			self._stored_data[self._config[CONF_ID]] = {}
